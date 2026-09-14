@@ -164,6 +164,20 @@ endpoint is not available.
 Keep frame images as relative links (`frames/xx.jpg`) and copy `frames/` next to the `.md`,
 else the links break. Deliver with `MEDIA:<abs path to .md>`.
 
+Report integrity & attribution (both bite the moment the report is public):
+
+- **Never invent content for a frame the VLM answered "none" for.** A transition or
+  subtitle-only shot legitimately yields 无/None — write that. Supplying a plausible formula the
+  picture does not show is fabrication, and any reader can check it against the frame.
+- **Attribute third-party material quoted in the report.** On-screen board text, a paper figure,
+  or a quoted sentence belongs to someone else: cite it. For an open-access paper that usually
+  means full citation + its licence (e.g. PLOS ONE articles are CC BY: reuse allowed, attribution
+  required); for the video itself, link it, name the uploader, quote only short excerpts, and say
+  you will remove it on request.
+- A public repo built from this skill should state what it does **not** redistribute (video,
+  frames, model weights, ffmpeg/yt-dlp binaries) — see this project's `NOTICE.md`.
+
+
 ## Pitfalls
 
 - **Bilibili HTTP 412 is a cookie problem, not a header problem.** `Referer` + a Chrome
