@@ -9,8 +9,8 @@ Canonical end-to-end pipeline: prove the URL is reachable → pull the video pas
 bot wall → verify the file → transcribe the audio → vision-read key frames → author an
 illustrated markdown report.
 
-Supersedes the two narrow recipes (`video-download`, `video-content-report`) by chaining them;
-use this skill as the entry point. Source: https://github.com/mofahqc/bilibili-video-report
+Use this skill as the single entry point for the whole download → analysis → report flow.
+Source: https://github.com/mofahqc/bilibili-video-report
 Verified end-to-end on a real BV video (BV1ezYx6EEqA: 164s, 1440x1080 AV1 + AAC, 80 ASR
 segments, 4/4 frames vision-read OK).
 
