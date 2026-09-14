@@ -14,6 +14,19 @@ use this skill as the entry point. Source: https://github.com/mofahqc/bilibili-v
 Verified end-to-end on a real BV video (BV1ezYx6EEqA: 164s, 1440x1080 AV1 + AAC, 80 ASR
 segments, 4/4 frames vision-read OK).
 
+## Where this skill runs
+
+- **Hermes Agent (primary)** — automatic `description` matching loads this file, `terminal` /
+  `execute_code` run the steps, `MEDIA:` delivers the report. Every measurement quoted here was
+  taken in a Hermes session.
+- **Any other Agent Skills host** — `SKILL.md` + YAML frontmatter is the open standard, so
+  Claude Code, Codex, OpenCode, Cursor, Cline, Gemini CLI and claude.ai load it unchanged
+  (`~/.claude/skills/`, `~/.agents/skills/`, `<repo>/.agents/skills/`, …).
+- **No agent at all** — every step is a plain shell command; the four scripts run standalone
+  (CLI, your own Python, cron/CI). Run `scripts/check_env.py` first.
+
+Per-host install paths and invocation are in the repo README (`README.md` / `README.en.md`).
+
 ## Toolchain (paths verified on the author's Windows box; env-overridable)
 
 | piece | location / version | override |

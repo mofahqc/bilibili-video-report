@@ -1,5 +1,7 @@
 # bilibili-video-report
 
+**Primary environment: [Hermes Agent](https://github.com/NousResearch/hermes-agent)** — this repo was developed and end-to-end verified inside a Hermes session. The skill itself follows the **Agent Skills open standard** (`SKILL.md` + YAML frontmatter), so Claude Code, Codex, OpenCode, Cursor, Gemini CLI and others can load it as-is; the four scripts also run **standalone, with no agent at all**. See [Environments](#environments) and [Invocation](#invocation).
+
 > Turn a **Bilibili (B站)** video into an illustrated markdown report: key-frame screenshots, LaTeX formulas, and a topic-by-topic structure. A [Hermes Agent](https://github.com/NousResearch/hermes-agent) skill — but the scripts work standalone too.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
@@ -36,6 +38,25 @@ flowchart LR
 
 ---
 
+## Environments
+
+| Environment | Where it lives | Auto-invoked? | Use it for |
+|---|---|---|---|
+| **Hermes Agent** (primary, verified) | `<hermes>/skills/media/` or `<hermes>/profiles/<name>/skills/media/` | ✅ matches on `description`; `-s` preloads it | one natural-language instruction runs the whole pipeline and delivers the report into the chat |
+| **Other Agent Skills hosts** — Claude Code, Codex, OpenCode, Cursor, Cline, Gemini CLI, Copilot, claude.ai | `~/.claude/skills/`, `~/.agents/skills/`, … (see [Install](#install)) | ✅ same `SKILL.md` standard | you already live in another agent |
+| **No agent** — plain CLI, your own Python, CI | nothing to install, just `git clone` | — | batch jobs, cron, embedding in an existing pipeline |
+
+**Why Hermes is the primary environment:** this is not a blob of prose — it leans on concrete Hermes capabilities, and every number in this README was produced there (Windows 11 + a Hermes profile + Python 3.13.3 + whisper `large-v3-turbo` + `qwen3.7-plus` vision):
+
+- **automatic skill loading** — a `description` match injects `SKILL.md`; no prompt to paste each time;
+- **full tool access** — `terminal` (yt-dlp / ffmpeg / whisper), `execute_code` (batch frame reading, cache management, timeline maths), `MEDIA:` (hands the report plus `frames/` straight to the chat window);
+- **multi-profile reuse** — `install.sh --all` puts it in every Hermes profile at once;
+- **verifiable steps** — probe / ffprobe / cache files give every stage its own check.
+
+On other hosts, the first two are provided by that host's own machinery (auto-load + terminal/file tools) and **the commands and steps in `SKILL.md` apply unchanged**.
+
+---
+
 ## Requirements
 
 | Component | Tested version | Required | Install |
@@ -55,22 +76,105 @@ python scripts/check_env.py     # prints OK / WARN / MISSING for every dependenc
 
 ## Install
 
+### Hermes Agent (primary)
+
 ```bash
 git clone https://github.com/mofahqc/bilibili-video-report.git
 cd bilibili-video-report
 
-./install.sh              # default Hermes profile
-./install.sh learning     # a named profile
-./install.sh --all        # every profile on the machine
+./install.sh              # shared tree: <hermes>/skills/media/
+./install.sh learning     # one profile: <hermes>/profiles/learning/skills/media/
+./install.sh --all        # shared tree + every profile
 ```
 
-Or let Hermes install it straight from the raw `SKILL.md`:
+Or let Hermes fetch it straight from the raw `SKILL.md`:
 
 ```bash
 hermes skills install https://raw.githubusercontent.com/mofahqc/bilibili-video-report/main/SKILL.md
+hermes skills list | grep bilibili-video     # confirm it loaded
 ```
 
-No Hermes? Skip the install — the scripts are plain CLIs.
+`%LOCALAPPDATA%\hermes` is detected automatically on Windows, and a `HERMES_HOME` that points at a *profile* dir is resolved up to the Hermes root.
+
+### Other Agent Skills hosts
+
+```bash
+./install.sh --agent claude-code      # ~/.claude/skills/
+./install.sh --agent codex            # ~/.agents/skills/
+./install.sh --agent opencode         # ~/.config/opencode/skills/
+./install.sh --agent gemini-cli       # ~/.gemini/skills/
+./install.sh --agent agents           # ~/.agents/skills/  (universal / user scope)
+
+./install.sh --agent claude-code --project /path/to/your/repo
+# → <repo>/.claude/skills/… and <repo>/.agents/skills/…
+```
+
+Manual install = drop the skill folder at one of these paths (the folder name must equal `name`):
+
+| Host | User / global | Project |
+|---|---|---|
+| **Hermes** | `<hermes>/skills/media/` | — |
+| **Claude Code** | `~/.claude/skills/<name>/SKILL.md` | `<repo>/.claude/skills/<name>/SKILL.md` |
+| **Codex CLI / IDE** | `$HOME/.agents/skills/<name>/` (some builds also scan `~/.codex/skills/`) | `<repo>/.agents/skills/<name>/` |
+| **OpenCode** | `~/.config/opencode/skills/`, `~/.claude/skills/`, `~/.agents/skills/` | `.opencode/skills/`, `.claude/skills/`, `.agents/skills/` |
+| **Gemini CLI** | `~/.gemini/skills/<name>/` | `<repo>/.agents/skills/<name>/` |
+| **Cursor / Cline / Amp / GitHub Copilot** | — | `<repo>/.agents/skills/<name>/` |
+| **claude.ai (web)** | upload a ZIP of the skill folder: Settings → Capabilities → Customize → Skills | — |
+
+> Paths and frontmatter rules follow each host's own docs (Claude Code: `docs.anthropic.com/en/docs/claude-code/skills`; Codex: `developers.openai.com/codex/skills`; OpenCode: `opencode.ai/docs/skills`). This skill uses only the standard `name` / `description` fields and its folder name matches `name`, so all of the above accept it.
+
+### No install at all
+
+The four scripts are plain CLIs — `git clone` and run them.
+
+---
+
+## Invocation
+
+### Hermes Agent (primary)
+
+```
+Analyze this Bilibili video and produce an illustrated report:
+https://www.bilibili.com/video/BV1ezYx6EEqA
+```
+
+From the CLI / in automation:
+
+```bash
+hermes chat -q "Analyze this Bilibili video into an illustrated report: <URL>"
+hermes -p kaoyan-math chat -q "Analyze this video: <URL>"          # a specific profile
+hermes chat -s bilibili-video-report -q "Analyze this video: <URL>" # preload explicitly
+```
+
+Hermes follows the nine steps in `SKILL.md` and delivers the report with `MEDIA:`.
+
+### Other Agent Skills hosts
+
+| Host | How to trigger explicitly |
+|---|---|
+| Claude Code | type `/bilibili-video-report` (the skill name is the slash command), or just describe the task |
+| Codex CLI / IDE | type `$bilibili-video-report`, or pick it from `/skills` |
+| OpenCode | the agent loads it through its `skill` tool: `skill({ name: "bilibili-video-report" })` |
+| Cursor / Cline / Copilot (`.agents/skills/`) | describe the task in chat; the host matches on `description` |
+| claude.ai | enable it under Customize → Skills, then just ask |
+
+**Requirement:** the host must be able to **run commands** (yt-dlp / ffmpeg / whisper) and **read/write files**. Without a terminal, this skill degrades to a prompt template — every step is a real command.
+
+### No agent: CLI, Python, CI
+
+Treat `SKILL.md` as a runbook, or call the scripts from your own Python:
+
+```python
+import subprocess, sys
+
+SKILL = "/path/to/bilibili-video-report"
+subprocess.run([sys.executable, f"{SKILL}/scripts/fetch_bili_cookies.py", "."], check=True)
+timeline = subprocess.run([sys.executable, f"{SKILL}/scripts/bili_transcribe.py", "video.mp4"],
+                          check=True, capture_output=True, text=True).stdout
+subprocess.run([sys.executable, f"{SKILL}/scripts/bili_vision.py", "frames"], check=True)
+```
+
+In cron / GitHub Actions, inject the vision key as `DASHSCOPE_API_KEY` and run `check_env.py` as the first gate.
 
 ---
 

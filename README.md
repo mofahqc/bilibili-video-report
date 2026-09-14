@@ -2,6 +2,8 @@
 
 > 把 B站（Bilibili）视频变成**带关键帧截图、LaTeX 公式和结构目录的图文解析报告** —— 一个 [Hermes Agent](https://github.com/NousResearch/hermes-agent) 技能（skill）。
 
+**主要运行环境是 [Hermes Agent](https://github.com/NousResearch/hermes-agent)**，本文档的实测数据全部来自 Hermes 会话。技能本体遵循 **Agent Skills 开放标准**（`SKILL.md` + YAML frontmatter），因此 Claude Code / Codex / OpenCode / Cursor / Gemini CLI 等宿主也能直接加载；4 个脚本还可以**完全脱离 agent** 独立运行。三者的差异见 [运行环境](#运行环境)，各环境的安装与调用见 [安装（各环境）](#安装各环境) 与 [调用方式](#调用方式)。
+
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Python 3.9+](https://img.shields.io/badge/python-3.9%2B-blue.svg)](https://www.python.org/)
 [![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey.svg)](#环境要求)
@@ -19,9 +21,11 @@
 - [特性](#特性)
 - [流水线](#流水线)
 - [目录结构](#目录结构)
+- [运行环境](#运行环境)
 - [环境要求](#环境要求)
-- [安装](#安装)
-- [快速开始](#快速开始)
+- [安装（各环境）](#安装各环境)
+- [调用方式](#调用方式)
+- [快速开始（纯命令行）](#快速开始纯命令行)
 - [脚本参考](#脚本参考)
 - [报告格式](#报告格式)
 - [配置与环境变量](#配置与环境变量)
@@ -103,13 +107,33 @@ bilibili-video-report/
 ├── README.md                    # 中文详解（本文件）
 ├── README.en.md                 # English quickstart
 ├── requirements.txt             # 外部工具/Python 包依赖清单
-├── install.sh                   # 安装到 Hermes 档案（单个或 --all）
+├── install.sh                   # 安装到 Hermes 档案 / 其他 Agent Skills 宿主
 ├── LICENSE                      # MIT
 └── .gitignore
 ```
 
 ---
 
+## 运行环境
+
+本技能可运行在三类环境里，能力逐级递减：
+
+| 环境 | 装在哪里 | 会自动调用吗 | 适合 |
+|---|---|---|---|
+| **Hermes Agent**（主要环境，本文实测环境） | `<hermes>/skills/media/` 或 `<hermes>/profiles/<档案>/skills/media/` | ✅ 按 `description` 自动匹配，也能用 `-s` 预加载 | 一句话跑完全流程并把报告交付到聊天窗口 |
+| **其他 Agent Skills 宿主**（Claude Code / Codex / OpenCode / Cursor / Cline / Gemini CLI / Copilot / claude.ai …） | `~/.claude/skills/`、`~/.agents/skills/` 等，见[安装](#安装各环境) | ✅ 同一套 `SKILL.md` 标准 | 已经习惯用别的 agent |
+| **无 agent**（纯命令行 / 自己的 Python / CI） | 不需要安装，`git clone` 即可 | — | 批处理、定时任务、接进现有流水线 |
+
+**为什么主要环境是 Hermes**：本技能不是一段通用提示词，它用到了 Hermes 的几个具体能力，实测数据也是在这个环境里跑出来的（Windows 11 + Hermes `learning` 档案 + Python 3.13.3 + whisper `large-v3-turbo` + `qwen3.7-plus` 识图）：
+
+- **技能自动加载**——`description` 一匹配就把 `SKILL.md` 注入上下文，不用每次粘贴提示词；
+- **完整工具集**——`terminal`（跑 yt-dlp / ffmpeg / whisper）、`execute_code`（批量识图、写缓存、算时间轴）、`MEDIA:`（把报告和 `frames/` 直接交付到聊天窗口）；
+- **跨档案复用**——`install.sh --all` 一次装进所有 Hermes 档案，换档案还能用同一套流程；
+- **可排查性**——每一步都有校验（probe / ffprobe / 缓存文件），出错能定位到具体环节。
+
+在别的宿主里，第 1、2 点由那个宿主自己的机制提供（自动加载 + 终端/文件工具），`SKILL.md` 里的**命令与步骤原样可用**，不需要改一行。
+
+---
 ## 环境要求
 
 | 组件 | 实测版本 | 必需性 | 安装方式 |
@@ -145,50 +169,160 @@ all required items present -- ready to run
 
 ---
 
-## 安装
+## 安装（各环境）
 
-### 方式 A — 交给 Hermes Agent（推荐）
+### Hermes Agent（主要环境）
 
-把这句话发给你的 Hermes：
+三种方式任选：
+
+**① 交给 Hermes 自己装**（最省事）：
 
 ```
 把 https://github.com/mofahqc/bilibili-video-report 装成技能，然后分析这个视频：
 https://www.bilibili.com/video/BVxxxxxxxxx
 ```
 
-### 方式 B — 用 Hermes CLI 安装
+**② 用 Hermes CLI 装**（直接指向仓库根目录的 `SKILL.md`）：
 
 ```bash
-# 直接指向仓库根目录的 SKILL.md
 hermes skills install https://raw.githubusercontent.com/mofahqc/bilibili-video-report/main/SKILL.md
+hermes skills list | grep bilibili-video     # 确认已加载
 ```
 
-### 方式 C — 手动 clone + install.sh
+**③ clone 后跑 `install.sh`**（能精确控制装到哪个档案）：
 
 ```bash
 git clone https://github.com/mofahqc/bilibili-video-report.git
 cd bilibili-video-report
 
-./install.sh              # 装到默认档案 (~/.hermes/skills/media/)
-./install.sh learning     # 装到 profiles/learning
-./install.sh --all        # 装到所有 Hermes 档案（自动跳过源目录本身）
+./install.sh              # 装到共享目录 <hermes>/skills/media/
+./install.sh learning     # 只装到 profiles/learning
+./install.sh --all        # 装到共享目录 + 所有档案
 ```
 
-脚本会把 `SKILL.md` 和 `scripts/` 复制到 `<hermes>/[profiles/<name>/]skills/media/bilibili-video-report/`，完成后打印目标路径。Windows 上 `LOCALAPPDATA\hermes` 会被自动识别。
+安装位置：`<hermes>/[profiles/<档案名>/]skills/media/bilibili-video-report/`（`SKILL.md` + `scripts/`）。
+Windows 上 `%LOCALAPPDATA%\hermes` 会被自动识别；`HERMES_HOME` 指向某个档案目录时会自动上溯到 Hermes 根。
 
-> 不想装成技能也能用：4 个脚本是独立 CLI，`git clone` 后直接按下面的步骤运行即可。
+### 其他 Agent Skills 宿主
+
+同一份 `SKILL.md` 复制过去即可，`install.sh` 内置了常见宿主的路径：
+
+```bash
+./install.sh --agent claude-code      # ~/.claude/skills/
+./install.sh --agent codex            # ~/.agents/skills/
+./install.sh --agent opencode         # ~/.config/opencode/skills/
+./install.sh --agent gemini-cli       # ~/.gemini/skills/
+./install.sh --agent agents           # ~/.agents/skills/  通用/用户级
+
+# 装进某个项目的项目级技能目录
+./install.sh --agent claude-code --project /path/to/your/repo
+# → <repo>/.claude/skills/bilibili-video-report/ 与 <repo>/.agents/skills/bilibili-video-report/
+```
+
+手动安装等价于把技能目录放到下表位置（目录名要等于 `name`）：
+
+| 宿主 | 用户级 / 全局 | 项目级 |
+|---|---|---|
+| **Hermes** | `<hermes>/skills/media/` | — |
+| **Claude Code** | `~/.claude/skills/<name>/SKILL.md` | `<repo>/.claude/skills/<name>/SKILL.md` |
+| **Codex CLI / IDE** | `$HOME/.agents/skills/<name>/`（部分版本也扫 `~/.codex/skills/`） | `<repo>/.agents/skills/<name>/` |
+| **OpenCode** | `~/.config/opencode/skills/`、`~/.claude/skills/`、`~/.agents/skills/` | `.opencode/skills/`、`.claude/skills/`、`.agents/skills/` |
+| **Gemini CLI** | `~/.gemini/skills/<name>/` | `<repo>/.agents/skills/<name>/` |
+| **Cursor / Cline / Amp / GitHub Copilot** 等 | — | `<repo>/.agents/skills/<name>/` |
+| **claude.ai（网页版）** | 把技能目录打成 ZIP 上传：Settings → Capabilities → Customize → Skills | — |
+
+> 各宿主的路径与 frontmatter 要求以其官方文档为准（Claude Code：`docs.anthropic.com/en/docs/claude-code/skills`；Codex：`developers.openai.com/codex/skills`；OpenCode：`opencode.ai/docs/skills`）。
+> 本技能的 frontmatter 只用了标准字段 `name` / `description`，且 `name` 与目录名一致，因此上述宿主都能识别。
+
+### 不安装：当普通脚本用
+
+4 个脚本是独立 CLI，不需要任何"技能加载"机制：
+
+```bash
+git clone https://github.com/mofahqc/bilibili-video-report.git
+python bilibili-video-report/scripts/check_env.py
+```
 
 ---
 
-## 快速开始
+## 调用方式
 
-### 交给 agent 的用法
+### Hermes Agent（主要环境）
+
+最自然的方式——一句话，让它自己读技能、跑流程、把报告交付出来：
 
 ```
 分析这个 B站视频，输出图文报告：https://www.bilibili.com/video/BV1ezYx6EEqA
 ```
 
-agent 会读取 `SKILL.md`，按 9 步走完，最后给出报告文件（Markdown，图片为相对路径的 `frames/` 目录）。
+命令行 / 自动化：
+
+```bash
+# 单次问答，答完退出
+hermes chat -q "分析这个 B站视频并输出图文报告：https://www.bilibili.com/video/BV1ezYx6EEqA"
+
+# 指定档案
+hermes -p kaoyan-math chat -q "分析这个视频：<URL>"
+
+# 显式预加载技能（不依赖 description 自动匹配）
+hermes chat -s bilibili-video-report -q "分析这个视频：<URL>"
+```
+
+Hermes 会按 `SKILL.md` 的 9 步执行，并用 `MEDIA:` 交付报告（桌面端直接渲染，报告里的图片指向同目录的 `frames/`）。
+
+### 其他 Agent Skills 宿主
+
+技能会被宿主自动发现，并在任务匹配 `description` 时自动加载；也可以显式触发：
+
+| 宿主 | 显式触发方式 |
+|---|---|
+| Claude Code | 输入 `/bilibili-video-report`（技能名即斜杠命令），或直接说"分析这个 B站视频 <URL>" |
+| Codex CLI / IDE | 输入 `$bilibili-video-report`，或跑 `/skills` 从列表选；也可以直接在提示里点名 |
+| OpenCode | agent 通过内置 `skill` 工具加载：`skill({ name: "bilibili-video-report" })` |
+| Cursor / Cline / Copilot 等（`.agents/skills/`） | 在对话里直接描述任务，宿主按 `description` 匹配 |
+| claude.ai | 上传 ZIP 后在 Customize → Skills 启用，对话里直接说任务 |
+
+**前提**：这些宿主同样要能**执行命令**（跑 yt-dlp / ffmpeg / whisper）并**读写文件**。若宿主没有执行能力，本技能就只能当提示词模板看——它的每一步都是真实命令，没有终端能力走不动。
+
+### 无 agent：命令行 / Python / CI
+
+把 `SKILL.md` 当操作手册，自己敲命令（见 [快速开始（纯命令行）](#快速开始纯命令行)）。也可以在自己的 Python 流程里直接调用脚本：
+
+```python
+import subprocess, sys
+
+SKILL = "/path/to/bilibili-video-report"
+
+# ① 取匿名 cookie
+subprocess.run([sys.executable, f"{SKILL}/scripts/fetch_bili_cookies.py", "."], check=True)
+
+# ② 转写：stdout 就是 start<TAB>end<TAB>text 时间轴
+timeline = subprocess.run([sys.executable, f"{SKILL}/scripts/bili_transcribe.py", "video.mp4"],
+                          check=True, capture_output=True, text=True).stdout
+
+# ③ 识图：结果缓存进 vision_results.json，可反复运行
+subprocess.run([sys.executable, f"{SKILL}/scripts/bili_vision.py", "frames"], check=True)
+```
+
+定时 / 批处理（比如每天追更某个 UP 主的新视频）：
+
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
+cd /tmp/bili_job
+python /opt/bilibili-video-report/scripts/check_env.py                       # 先守门
+python /opt/bilibili-video-report/scripts/fetch_bili_cookies.py .             # cookie 可复用
+python /opt/bilibili-video-report/scripts/bili_transcribe.py "$1"
+python /opt/bilibili-video-report/scripts/bili_vision.py frames --out vision_results.json
+```
+
+放进 cron / GitHub Actions 时，把视觉 API key 用环境变量注入（`DASHSCOPE_API_KEY`），并把 `check_env.py` 作为第一步。
+
+---
+
+## 快速开始（纯命令行）
+
+下面是技能内部真正执行的原始命令，任何终端都能照着跑（注释里是实测输出）。
 
 ### 手动命令行用法
 
