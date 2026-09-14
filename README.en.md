@@ -284,6 +284,18 @@ Full write-up: [`docs/troubleshooting.md`](docs/troubleshooting.md).
 
 ---
 
+## Copyright & third-party notices
+
+- **This project's code** — MIT, © 2026 mofahqc (see [LICENSE](LICENSE)).
+- **No third-party works are distributed here** — no downloaded video/audio, no video frames, no model weights, no `ffmpeg`/`yt-dlp` binaries. `.gitignore` excludes them; they are fetched locally at run time.
+- **Quotes in the example report** — the video's title, uploader and a few transcript lines are quoted briefly with attribution (copyright stays with the uploader). The English sentence and Figure 6 content in section 4 come from Wheeler APS, Morad S, Buchholz N, Knight MM (2012) *The Shape of the Urine Stream — From Biophysics to Diagnostics*, PLOS ONE 7(10): e47133 (`doi:10.1371/journal.pone.0047133`), published under **CC BY** — reuse permitted with attribution, which is given above.
+- **Trademarks** — Bilibili/哔哩哔哩, Hermes Agent/Nous Research, DashScope/Alibaba/Qwen, OpenAI, Anthropic/Claude, Cursor and others belong to their respective owners. This project is **not affiliated with, sponsored or endorsed by** any of them — in particular it has **no connection to Bilibili**.
+- **Your responsibility** — personal study/research only; comply with Bilibili's terms of service and local copyright law; do not redistribute downloaded content.
+
+Full component and licence table, including the FFmpeg LGPL/GPL caveat: **[NOTICE.md](NOTICE.md)**.
+
+---
+
 ## License
 
 [MIT](LICENSE). Downloaded video is **not** redistributed; the example report keeps only text and formula excerpts. Please use this for personal study/research and respect Bilibili's terms and local copyright law.

@@ -32,6 +32,7 @@
 - [疑难排查](#疑难排查)
 - [实测记录](#实测记录)
 - [FAQ](#faq)
+- [版权与第三方声明](#版权与第三方声明)
 - [许可证](#许可证)
 
 ---
@@ -107,8 +108,10 @@ bilibili-video-report/
 ├── README.en.md                 # English quickstart
 ├── requirements.txt             # 外部工具/Python 包依赖清单
 ├── install.sh                   # 安装到 Hermes 档案 / 其他 Agent Skills 宿主
-├── LICENSE                      # MIT
-└── .gitignore
+├── LICENSE                      # MIT（本项目代码）
+├── NOTICE.md                    # 版权 / 商标 / 第三方依赖许可声明
+├── .gitattributes               # 换行规范（.sh / .py 强制 LF）
+└── .gitignore                   # 排除下载物、截帧、cookie 等运行时产物
 ```
 
 ---
@@ -561,6 +564,25 @@ python scripts/bili_vision.py frames \
 
 **Q：这样下载视频合法吗？**
 本仓库只提供技术流程。请仅用于个人学习/研究用途，并遵守 B站的服务条款与当地版权法规；**不要把下载的视频二次分发**。本仓库的示例报告只保留文字与公式摘录，不附带视频截帧。
+
+---
+
+## 版权与第三方声明
+
+- **本项目代码**：MIT，Copyright (c) 2026 mofahqc —— 全文见 [LICENSE](LICENSE)。
+- **本仓库不分发第三方作品**：不含下载的视频/音频、视频截帧、模型权重、`ffmpeg`/`yt-dlp` 二进制 ——
+  这些都由使用者在本地运行时自行获取，`.gitignore` 已排除。
+- **示例报告中的引用**：视频标题、UP主与少量转写摘录来自原视频（**版权归 UP 主所有**，仅作说明输出格式的有限引用并标注出处）；
+  第 4 节的英文引文与 Figure 6 内容来自
+  Wheeler APS, Morad S, Buchholz N, Knight MM (2012) *The Shape of the Urine Stream — From Biophysics to Diagnostics*,
+  PLOS ONE 7(10): e47133 —— 该论文为 **CC BY**，允许使用与再分发但须署名。
+- **商标**：哔哩哔哩 / Bilibili（B站）、Hermes Agent / Nous Research、DashScope / 阿里云 / Qwen、
+  OpenAI / Codex、Anthropic / Claude、Cursor 等均为其各自所有者的商标。本项目与它们
+  **无任何隶属、赞助或背书关系** —— 尤其与**哔哩哔哩没有关联**。
+- **使用责任**：仅限个人学习与研究；须遵守哔哩哔哩服务条款与当地版权法规；**请勿二次分发**下载内容。
+- 示例中的健康相关内容仅用于演示技术流程，**不构成医疗建议**。
+
+完整的第三方组件与许可清单（含 FFmpeg 的 LGPL/GPL 打包注意事项）见 **[NOTICE.md](NOTICE.md)**。
 
 ---
 
