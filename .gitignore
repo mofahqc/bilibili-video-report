@@ -1,0 +1,27 @@
+# ── 运行时产物（下载的视频、音频、抽帧、缓存） ──
+video.*
+*.mp4
+*.m4a
+*.wav
+*.webm
+frames/
+*.part
+cookies.txt
+
+# ── 转写与识图的中间结果 ──
+*.json
+!package.json
+
+# ── Python ──
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+
+# ── 编辑器 / 系统 ──
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini

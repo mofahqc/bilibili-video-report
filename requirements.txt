@@ -1,0 +1,29 @@
+# 流水线依赖清单
+#
+# 本仓库的 4 个辅助脚本（scripts/*.py）只用 Python 标准库，**不需要**安装任何东西。
+# 下面列的是脚本通过命令行调用的外部工具，以及完整的视频/音频/转写工具链。
+#
+# 安装（建议放在独立虚拟环境里，别装进 agent 自己的解释器）：
+#     python -m venv .venv
+#     .venv/Scripts/pip install -r requirements.txt      # Windows
+#     .venv/bin/pip     install -r requirements.txt      # macOS / Linux
+
+# ── 必需 ──────────────────────────────────────────────────────────────
+yt-dlp>=2025.1.1            # 视频下载（提供 yt-dlp 命令行）
+openai-whisper>=20231117    # 语音转写 ASR（会自动拉取 torch）
+
+# ── 以下为可选/平台相关 ────────────────────────────────────────────────
+# GPU 加速：CPU 也能跑，只是慢 5-10 倍。按 CUDA 版本选一条：
+#   pip install torch --index-url https://download.pytorch.org/whl/cu124
+#   pip install torch --index-url https://download.pytorch.org/whl/cpu
+#
+# openai-whisper 的替代品（二选一，更快、显存占用更低）：
+#   faster-whisper>=1.0.0
+#
+# 注意：ffmpeg / ffprobe 不是 Python 包，必须用系统包管理器安装并加入 PATH：
+#   Windows:  winget install Gyan.FFmpeg
+#   macOS:    brew install ffmpeg
+#   Linux:    sudo apt install ffmpeg
+#
+# 视觉模型：走 HTTP API，见 README 的「配置与环境变量」；如使用 DashScope：
+#   export DASHSCOPE_API_KEY=sk-xxxxxxxx

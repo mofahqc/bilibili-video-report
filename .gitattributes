@@ -1,0 +1,15 @@
+# Normalise line endings in the repo; keep shell scripts LF so they run on Linux/macOS.
+* text=auto
+
+*.sh    text eol=lf
+*.py    text eol=lf
+*.md    text eol=lf
+*.txt   text eol=lf
+
+# Binaries / generated artefacts
+*.jpg   binary
+*.jpeg  binary
+*.png   binary
+*.mp4   binary
+*.wav   binary
+*.pt    binary
