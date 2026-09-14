@@ -87,12 +87,22 @@ cd bilibili-video-report
 ./install.sh --all        # shared tree + every profile
 ```
 
-Or let Hermes fetch it straight from the raw `SKILL.md`:
+Or let Hermes fetch it from GitHub — **works, but not recommended** (measured):
+
+- Blocked by the skill scanner by default (`Installation blocked: community source + caution verdict`):
+  it trips `python_subprocess` / `python_os_environ` / `unpinned_pip_install`, which is *inherent* to this
+  skill — it shells out to ffmpeg/yt-dlp/whisper and reads the vision API key from the environment. `--force` is required.
+- It installs under the frontmatter `name` (**`--name` had no effect in testing**) and will **silently overwrite**
+  an existing skill of that name.
+- Installing from a **single `SKILL.md` URL** fetched only part of `scripts/` in testing (2 of 4 files) and
+  rewrote `SKILL.md`'s line endings.
 
 ```bash
-hermes skills install https://raw.githubusercontent.com/mofahqc/bilibili-video-report/main/SKILL.md
-hermes skills list | grep bilibili-video     # confirm it loaded
+# only if you insist, after reading the source yourself
+hermes skills install https://raw.githubusercontent.com/mofahqc/bilibili-video-report/main/SKILL.md --force
 ```
+
+**Prefer clone + `install.sh`** (option below): all four scripts land, byte-identical to the repo.
 
 `%LOCALAPPDATA%\hermes` is detected automatically on Windows, and a `HERMES_HOME` that points at a *profile* dir is resolved up to the Hermes root.
 
@@ -261,6 +271,8 @@ Environment variables: `WHISPER_EXE` (whisper not on PATH), `DASHSCOPE_API_KEY` 
 
 | Symptom | Fix |
 |---|---|
+| `Installation blocked ... community source + caution verdict` on `hermes skills install` | The skill scanner sees shell-outs + env-var reads; use `git clone` + `./install.sh` (recommended) or review the code and add `--force` |
+| After a raw `SKILL.md` URL install, `scripts/` is missing files and the skill fails | Single-file install fetched only part of `scripts/`; reinstall with `git clone` + `./install.sh` (or `install.sh --all`) |
 | `HTTP Error 412` | You skipped the cookies: run `fetch_bili_cookies.py` and pass `--cookies` |
 | `--cookies-from-browser` fails to decrypt | Don't use it — Edge/chrome cookie stores are locked/DPAPI-encrypted; use the anonymous SPI cookies |
 | Download left a `.m4a.part` and no `video.mp4` | Re-run with `--continue --merge-output-format mp4`; don't re-download |

@@ -181,12 +181,20 @@ all required items present -- ready to run
 https://www.bilibili.com/video/BVxxxxxxxxx
 ```
 
-**② 用 Hermes CLI 装**（直接指向仓库根目录的 `SKILL.md`）：
+**② 让 Hermes 直接从 GitHub 抓取** —— 这条路有坑，实测结论如下，**能走通但不推荐**：
+
+- 默认会被技能扫描器拦下（`Installation blocked: community source + caution verdict`），
+  命中 `python_subprocess` / `python_os_environ` / `unpinned_pip_install` 三条规则——对这个技能来说是
+  **必然的**：它本来就要调用 ffmpeg/yt-dlp/whisper 子进程，也要从环境变量读视觉模型的 API key。必须加 `--force`。
+- 它按 `SKILL.md` 里的 `name` 安装，**实测 `--name` 参数不生效**；如果同名技能已存在，会**静默覆盖**掉它。
+- 从**单个 `SKILL.md` URL** 安装时，实测只拉到了部分 `scripts/`（4 个脚本只到位 2 个），并且会重写 `SKILL.md` 的换行格式。
 
 ```bash
-hermes skills install https://raw.githubusercontent.com/mofahqc/bilibili-video-report/main/SKILL.md
-hermes skills list | grep bilibili-video     # 确认已加载
+# 非要走这条路（自行读过源码后再用）
+hermes skills install https://raw.githubusercontent.com/mofahqc/bilibili-video-report/main/SKILL.md --force
 ```
+
+**推荐做法是先 clone 再用 `install.sh`**（即下面 ③）：保证 4 个脚本齐全、内容与仓库逐字节一致。
 
 **③ clone 后跑 `install.sh`**（能精确控制装到哪个档案）：
 
@@ -504,6 +512,8 @@ python scripts/bili_vision.py frames \
 
 | 现象 | 原因 | 解决 |
 |---|---|---|
+| `hermes skills install <raw URL>` 报 `Installation blocked ... community source + caution verdict` | 技能扫描器按社区来源判定；本技能调用子进程、读环境变量，必然命中三条规则 | 用 `git clone` + `./install.sh`（推荐）；或自行读过源码后加 `--force` |
+| 用 raw `SKILL.md` URL 安装后，`scripts/` 里少了脚本、技能跑不动 | 单文件 URL 安装实测只拉到部分 `scripts/`，且会重写 `SKILL.md` | 改用 `git clone` + `./install.sh`，或 `install.sh --all` 覆盖修复 |
 | `HTTP Error 412: Precondition Failed` | 只伪装了 `Referer`/`UA`，缺匿名指纹 cookie | 跑 `fetch_bili_cookies.py`，下载时加 `--cookies cookies.txt` |
 | `--cookies-from-browser chrome` 报解密失败 | Edge 的 cookie 库 DPAPI 解密失败；Chrome 运行时数据库被锁 | 别用这个参数，用 SPI 匿名 cookie（不需要登录） |
 | 下载中断，只剩 `video.f<id>.m4a.part` | yt-dlp 先下视频流、后下音频流，超时卡在音频 | 重跑加 `--continue --merge-output-format mp4` 只补音频并合并，**不要删了重下** |
